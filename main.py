@@ -103,10 +103,37 @@ class Grafo:
                 print(f"Vértice {art+1}: demarcadores -> {', '.join(map(str, demarcadores_dict[art]))}")
 
     def mostrar_biconexas(self):
-        print("\nComponentes Biconexas:")
-        for raiz, comp in self.biconexas:
-            comp_formatado = ', '.join([f"({u+1},{v+1})" for u, v in comp])
-            print(f"Enraizada em v{raiz+1}: {comp_formatado}")
+        print("\nComponentes Biconexas (definição da foto):")
+        biconexas = []
+        # Para cada articulação e seus demarcadores, verifica a subárvore de cada demarcador
+        for v in range(self.n):
+            for w in range(self.n):
+                if self.pai[w] == v and (self.lowpt_idx[w] == v or self.lowpt_idx[w] == w):
+                    # w é demarcador de v
+                    # Verifica se a subárvore de w não contém articulações
+                    sub_arvore = self._subarvore(w)
+                    contem_articulacao = any(u in self.articulacoes and u != v for u in sub_arvore)
+                    if not contem_articulacao:
+                        # Os vértices da subárvore de w + v formam uma componente biconexa
+                        comp = sorted(list(sub_arvore | {v}))
+                        biconexas.append((v, comp))
+        if not biconexas:
+            print("Nenhuma componente biconexa encontrada.")
+        else:
+            for v, comp in biconexas:
+                comp_humano = ', '.join(f"v{u+1}" for u in comp)
+                print(f"Componente biconexa induzida por v{v+1}: {comp_humano}")
+
+    def _subarvore(self, raiz):
+        # Retorna o conjunto de vértices da subárvore de DFS enraizada em raiz
+        visitados = set()
+        def dfs_sub(u):
+            visitados.add(u)
+            for v in range(self.n):
+                if self.pai[v] == u and v not in visitados:
+                    dfs_sub(v)
+        dfs_sub(raiz)
+        return visitados
 
     def desenhar_grafo(self):
         G = nx.Graph()
