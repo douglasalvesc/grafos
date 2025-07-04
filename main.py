@@ -15,33 +15,27 @@ class Grafo:
         self.pilha = []
         self.arestas_retorno = []
 
-    def dfs(self, u):
-        filhos = 0
-        self.visitado[u] = True
+    def dfs(self, v):
+        # Implementação baseada no algoritmo da imagem (Jayme, Alg. 4.2)
+        self.visitado[v] = True
         self.tempo += 1
-        self.g[u] = self.low[u] = self.tempo
+        self.g[v] = self.low[v] = self.tempo
+        self.pilha.append(v)  # Simula "colocar v na pilha Q"
 
-        for v in range(self.n):
-            if self.matriz[u][v]:
-                if not self.visitado[v]:
-                    self.pai[v] = u
-                    filhos += 1
-                    self.pilha.append((u, v))
-                    self.dfs(v)
+        for w in range(self.n):
+            if self.matriz[v][w]:
+                if not self.visitado[w]:
+                    # visitar(v, w): aresta de árvore
+                    self.pai[w] = v
+                    self.dfs(w)
+                    self.low[v] = min(self.low[v], self.low[w])
+                else:
+                    # Se w está na pilha (ancestral) e não são consecutivos em Q, é aresta de retorno
+                    if w in self.pilha and w != self.pai[v]:
+                        # visitar(v, w): aresta de retorno
+                        self.arestas_retorno.append((v, w))
 
-                    self.low[u] = min(self.low[u], self.low[v])
-
-                    if (self.pai[u] == -1 and filhos > 1) or (self.pai[u] != -1 and self.low[v] >= self.g[u]):
-                        self.articulacoes.add(u)
-                        componente = []
-                        while self.pilha and self.pilha[-1] != (u, v):
-                            componente.append(self.pilha.pop())
-                        if self.pilha:
-                            componente.append(self.pilha.pop())
-                        self.biconexas.append((u, componente))
-                elif v != self.pai[u] and self.g[v] < self.g[u]:
-                    self.low[u] = min(self.low[u], self.g[v])
-                    self.arestas_retorno.append((u, v))
+        self.pilha.pop()  # retirar v de Q
 
     def busca_profundidade(self, raiz):
         self.dfs(raiz)
@@ -76,25 +70,63 @@ class Grafo:
         plt.show()
 
     def desenhar_arvore_dfs(self):
-        G = nx.Graph()
+        import networkx as nx
+        import matplotlib.pyplot as plt
+        # Grafo só com as arestas de árvore (para layout)
+        G_tree = nx.DiGraph()
         tree_edges = []
         for v in range(self.n):
             u = self.pai[v]
             if u != -1:
                 tree_edges.append((u+1, v+1))
-                G.add_edge(u+1, v+1)
+                G_tree.add_edge(u+1, v+1)
 
+        # Encontrar a raiz (primeiro nó sem pai)
+        raiz = None
+        for v in range(self.n):
+            if self.pai[v] == -1:
+                raiz = v+1
+                break
+        if raiz is None:
+            raiz = 1
+
+        # Layout hierárquico só para a árvore
+        def hierarchy_pos(G, root, width=1., vert_gap=0.3, vert_loc=0, xcenter=0.5, pos=None, parent=None):
+            if pos is None:
+                pos = {root: (xcenter, vert_loc)}
+            else:
+                pos[root] = (xcenter, vert_loc)
+            children = [v for u, v in G.edges() if u == root and v != parent]
+            if len(children) != 0:
+                dx = width / len(children)
+                nextx = xcenter - width/2 - dx/2
+                for child in children:
+                    nextx += dx
+                    pos = hierarchy_pos(G, child, width=dx, vert_gap=vert_gap,
+                                        vert_loc=vert_loc-vert_gap, xcenter=nextx, pos=pos, parent=root)
+            return pos
+
+        pos = hierarchy_pos(G_tree, raiz)
+
+        # Grafo completo para desenhar todas as arestas
+        G_full = nx.DiGraph()
+        G_full.add_nodes_from(G_tree.nodes())
+        G_full.add_edges_from(tree_edges)
         back_edges = [(u+1, v+1) for u, v in self.arestas_retorno]
-        G.add_edges_from(back_edges)
+        for u, v in back_edges:
+            G_full.add_edge(u, v)
 
-        pos = nx.spring_layout(G, seed=42)
-        nx.draw_networkx_nodes(G, pos, node_color='lightgreen')
-        nx.draw_networkx_labels(G, pos)
-
-        nx.draw_networkx_edges(G, pos, edgelist=tree_edges, edge_color='black')
-        nx.draw_networkx_edges(G, pos, edgelist=back_edges, edge_color='red', style='dashed')
-
+        nx.draw_networkx_nodes(G_full, pos, node_color='lightgreen', node_size=700)
+        nx.draw_networkx_labels(G_full, pos)
+        # Arestas de árvore: preto
+        nx.draw_networkx_edges(G_full, pos, edgelist=tree_edges, edge_color='black', width=2)
+        # Arestas de retorno: vermelho curvado
+        arc_rad = 0.3
+        for u, v in back_edges:
+            if (u, v) not in tree_edges:
+                nx.draw_networkx_edges(G_full, pos, edgelist=[(u, v)], edge_color='red', style='dashed', connectionstyle=f'arc3,rad={arc_rad}')
         plt.title('Árvore DFS (preto) e Arestas de Retorno (vermelho)')
+        plt.axis('off')
         plt.show()
 
 
