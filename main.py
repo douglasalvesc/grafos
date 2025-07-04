@@ -14,37 +14,68 @@ class Grafo:
         self.biconexas = []
         self.pilha = []
         self.arestas_retorno = []
+        self.lowpt_idx = [i for i in range(self.n)]  # novo vetor
 
     def dfs(self, v):
-        # Implementação baseada no algoritmo da imagem (Jayme, Alg. 4.2)
         self.visitado[v] = True
         self.tempo += 1
         self.g[v] = self.low[v] = self.tempo
-        self.pilha.append(v)  # Simula "colocar v na pilha Q"
+        self.lowpt_idx[v] = v
+        self.pilha.append(v)
 
+        filhos = 0  # Conta filhos diretos na DFS (importante para raiz)
         for w in range(self.n):
             if self.matriz[v][w]:
                 if not self.visitado[w]:
-                    # visitar(v, w): aresta de árvore
                     self.pai[w] = v
+                    filhos += 1
                     self.dfs(w)
-                    self.low[v] = min(self.low[v], self.low[w])
+                    if self.low[w] < self.low[v]:
+                        self.low[v] = self.low[w]
+                        self.lowpt_idx[v] = self.lowpt_idx[w]
+                    # Verifica condição de articulação (exceto raiz)
+                    if self.pai[v] != -1 and self.low[w] >= self.g[v]:
+                        self.articulacoes.add(v)
                 else:
-                    # Se w está na pilha (ancestral) e não são consecutivos em Q, é aresta de retorno
                     if w in self.pilha and w != self.pai[v]:
-                        # visitar(v, w): aresta de retorno
                         self.arestas_retorno.append((v, w))
+                        if self.g[w] < self.low[v]:
+                            self.low[v] = self.g[w]
+                            self.lowpt_idx[v] = w
 
-        self.pilha.pop()  # retirar v de Q
+        # Se v é raiz e tem mais de 1 filho, é articulação
+        if self.pai[v] == -1 and filhos > 1:
+            self.articulacoes.add(v)
+
+        self.pilha.pop()
+
+    def mostrar_articulacoes(self):
+        print("\nArticulações e demarcadores:")
+        for art in sorted(self.articulacoes):
+            # Para cada filho direto de art, se low[filho] >= g[art], é um demarcador
+            demarcadores = []
+            for v in range(self.n):
+                if self.pai[v] == art and self.low[v] >= self.g[art]:
+                    demarcadores.append(self.lowpt_idx[v]+1)  # +1 para exibir humano
+            if demarcadores:
+                print(f"Vértice {art+1}: demarcadores -> {', '.join(map(str, demarcadores))}")
+            else:
+                print(f"Vértice {art+1}: sem demarcadores")
 
     def busca_profundidade(self, raiz):
         self.dfs(raiz)
 
     def mostrar_tabela_lowpt(self):
-        print("\nVértice | g(v) | lowpt(v)")
-        print("-------------------------")
+        print("\nVértice | g(v) | lowpt(v) | vértice lowpt")
+        print("------------------------------------------")
         for v in range(self.n):
-            print(f"   {v+1:2}   |  {self.g[v]:2}  |   {self.low[v]:2}")
+            # Encontre o vértice w responsável pelo lowpt[v]
+            lowpt_vertice = v
+            for w in range(self.n):
+                if self.matriz[v][w]:
+                    if self.low[v] == self.g[w]:
+                        lowpt_vertice = w
+            print(f"   {v+1:2}   |  {self.g[v]:2}  |   {self.low[v]:2}    |     {lowpt_vertice+1}")
 
     def mostrar_articulacoes(self):
         print("\nArticulações e demarcadores:")
@@ -180,6 +211,18 @@ def menu(grafo):
             grafo.busca_profundidade(raiz)
             grafo.desenhar_arvore_dfs()
         elif opcao == '3':
+            if not any(grafo.g):  # Se g(v) ainda não foi calculado
+                print("Executando DFS automaticamente para calcular g(v) e lowpt(v)...")
+                grafo.visitado = [False] * grafo.n
+                grafo.tempo = 0
+                grafo.low = [0] * grafo.n
+                grafo.g = [0] * grafo.n
+                grafo.pai = [-1] * grafo.n
+                grafo.articulacoes = set()
+                grafo.biconexas = []
+                grafo.pilha = []
+                grafo.arestas_retorno = []
+                grafo.busca_profundidade(0)
             grafo.mostrar_tabela_lowpt()
         elif opcao == '4':
             grafo.mostrar_articulacoes()
