@@ -57,17 +57,22 @@ class Grafo:
         self.pilha.pop()
 
     def mostrar_articulacoes(self):
-        print("\nArticulações e demarcadores:")
-        for art in sorted(self.articulacoes):
-            # Para cada filho direto de art, se low[filho] >= g[art], é um demarcador
+        print("\nArticulações e demarcadores (definição da foto):")
+        novas_articulacoes = set()
+        demarcadores_dict = {}
+        for v in range(self.n):
             demarcadores = []
-            for v in range(self.n):
-                if self.pai[v] == art and self.low[v] >= self.g[art]:
-                    demarcadores.append(self.lowpt_idx[v]+1)  # +1 para exibir humano
+            for w in range(self.n):
+                if self.pai[w] == v and (self.lowpt_idx[w] == v or self.lowpt_idx[w] == w):
+                    demarcadores.append(w+1)  # +1 para exibir humano
             if demarcadores:
-                print(f"Vértice {art+1}: demarcadores -> {', '.join(map(str, demarcadores))}")
-            else:
-                print(f"Vértice {art+1}: sem demarcadores")
+                novas_articulacoes.add(v)
+                demarcadores_dict[v] = demarcadores
+        if not novas_articulacoes:
+            print("Nenhuma articulação encontrada.")
+        else:
+            for art in sorted(novas_articulacoes):
+                print(f"Vértice {art+1}: demarcadores -> {', '.join(map(str, demarcadores_dict[art]))}")
 
     def busca_profundidade(self, raiz):
         self.dfs(raiz)
@@ -78,10 +83,24 @@ class Grafo:
         for v in range(self.n):
             print(f"   {v+1:2}   |  {self.g[v]:2}  |     v{self.gpt_idx[v]+1:2}     |   {self.low[v]:2}    |     v{self.lowpt_idx[v]+1:2}")
 
-    def mostrar_articulacoes(self):
-        print("\nArticulações e demarcadores:")
-        for art in sorted(self.articulacoes):
-            print(f"Vértice {art+1}")
+    def mostrar_articulacoes_e_demarcadores(self):
+        print("\nArticulações e demarcadores (definição da foto):")
+        demarcadores_dict = {}
+        articulacoes = set()
+        for v in range(self.n):
+            demarcadores = []
+            for w in range(self.n):
+                # v é pai de w na árvore DFS e lowpt(w) = v ou w
+                if self.pai[w] == v and (self.lowpt_idx[w] == v or self.lowpt_idx[w] == w):
+                    demarcadores.append(w+1)  # +1 para exibir humano
+            if demarcadores:
+                articulacoes.add(v)
+                demarcadores_dict[v] = demarcadores
+        if not articulacoes:
+            print("Nenhuma articulação encontrada.")
+        else:
+            for art in sorted(articulacoes):
+                print(f"Vértice {art+1}: demarcadores -> {', '.join(map(str, demarcadores_dict[art]))}")
 
     def mostrar_biconexas(self):
         print("\nComponentes Biconexas:")
@@ -182,7 +201,7 @@ def menu(grafo):
         print("1 - Apresentar Grafo (representação gráfica)")
         print("2 - Apresentar Árvore de Busca em Profundidade")
         print("3 - Apresentar Tabela Lowpt(v) e g(v)")
-        print("4 - Listar Articulações com seus Respectivos Demarcadores")
+        print("4 - Listar Articulações com seus Respectivos Demarcadores (definição da foto)")
         print("5 - Apresentar Componentes Biconexas")
         print("0 - Sair")
 
@@ -226,7 +245,7 @@ def menu(grafo):
                 grafo.busca_profundidade(0)
             grafo.mostrar_tabela_lowpt()
         elif opcao == '4':
-            grafo.mostrar_articulacoes()
+            grafo.mostrar_articulacoes_e_demarcadores()
         elif opcao == '5':
             grafo.mostrar_biconexas()
         elif opcao == '0':
