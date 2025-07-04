@@ -15,11 +15,14 @@ class Grafo:
         self.pilha = []
         self.arestas_retorno = []
         self.lowpt_idx = [i for i in range(self.n)]  # novo vetor
+        self.gpt_idx = [i for i in range(self.n)]    # novo vetor para g(v)
 
     def dfs(self, v):
         self.visitado[v] = True
         self.tempo += 1
-        self.g[v] = self.low[v] = self.tempo
+        self.g[v] = self.tempo
+        self.gpt_idx[v] = v  # Inicialmente, g(v) = v
+        self.low[v] = self.tempo
         self.lowpt_idx[v] = v
         self.pilha.append(v)
 
@@ -39,6 +42,10 @@ class Grafo:
                 else:
                     if w in self.pilha and w != self.pai[v]:
                         self.arestas_retorno.append((v, w))
+                        # Se encontrar uma aresta de retorno, g(v) deve ser o menor índice alcançável
+                        if self.g[w] < self.g[v]:
+                            self.g[v] = self.g[w]
+                            self.gpt_idx[v] = w
                         if self.g[w] < self.low[v]:
                             self.low[v] = self.g[w]
                             self.lowpt_idx[v] = w
@@ -66,16 +73,10 @@ class Grafo:
         self.dfs(raiz)
 
     def mostrar_tabela_lowpt(self):
-        print("\nVértice | g(v) | lowpt(v) | vértice lowpt")
-        print("------------------------------------------")
+        print("\nVértice | g(v) | vértice g(v) | lowpt(v) | vértice lowpt")
+        print("--------------------------------------------------------")
         for v in range(self.n):
-            # Encontre o vértice w responsável pelo lowpt[v]
-            lowpt_vertice = v
-            for w in range(self.n):
-                if self.matriz[v][w]:
-                    if self.low[v] == self.g[w]:
-                        lowpt_vertice = w
-            print(f"   {v+1:2}   |  {self.g[v]:2}  |   {self.low[v]:2}    |     {lowpt_vertice+1}")
+            print(f"   {v+1:2}   |  {self.g[v]:2}  |     v{self.gpt_idx[v]+1:2}     |   {self.low[v]:2}    |     v{self.lowpt_idx[v]+1:2}")
 
     def mostrar_articulacoes(self):
         print("\nArticulações e demarcadores:")
