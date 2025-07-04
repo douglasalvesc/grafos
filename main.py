@@ -3,25 +3,25 @@ import networkx as nx
 
 class Grafo:
     def __init__(self, matriz):
-        self.matriz = matriz
-        self.n = len(matriz)
-        self.visitado = [False] * self.n
-        self.tempo = 0
-        self.low = [0] * self.n
-        self.g = [0] * self.n
-        self.pai = [-1] * self.n
-        self.articulacoes = set()
-        self.biconexas = []
-        self.pilha = []
-        self.arestas_retorno = []
-        self.lowpt_idx = [i for i in range(self.n)]  # novo vetor
-        self.gpt_idx = [i for i in range(self.n)]    # novo vetor para g(v)
+        self.matriz = matriz # matriz de adjacência do grafo.
+        self.n = len(matriz) #número de vértices.
+        self.visitado = [False] * self.n #marcação de visita
+        self.tempo = 0 #tempo de descoberta
+        self.low = [0] * self.n #menor tempo alcançável
+        self.g = [0] * self.n #tempo de descoberta
+        self.pai = [-1] * self.n #pai na árvore DFS.
+        self.articulacoes = set() #conjunto de vértices de articulação.
+        self.biconexas = [] #lista de componentes biconexas.
+        self.pilha = [] #controle da DFS
+        self.arestas_retorno = [] #dentificação de arestas de retorno.
+        self.lowpt_idx = [i for i in range(self.n)]  # índice auxiliar para lowpt
+        self.gpt_idx = [i for i in range(self.n)]    # índice auxiliar para g(v)
 
     def dfs(self, v):
         self.visitado[v] = True
         self.tempo += 1
         self.g[v] = self.tempo
-        self.gpt_idx[v] = v  # Inicialmente, g(v) = v
+        self.gpt_idx[v] = v
         self.low[v] = self.tempo
         self.lowpt_idx[v] = v
         self.pilha.append(v)
@@ -78,10 +78,10 @@ class Grafo:
         self.dfs(raiz)
 
     def mostrar_tabela_lowpt(self):
-        print("\nVértice | g(v) | vértice g(v) | lowpt(v) | vértice lowpt")
-        print("--------------------------------------------------------")
+        print("\nVértice | vértice g(v) | vértice lowpt")
+        print("--------------------------------------")
         for v in range(self.n):
-            print(f"   {v+1:2}   |  {self.g[v]:2}  |     v{self.gpt_idx[v]+1:2}     |   {self.low[v]:2}    |     v{self.lowpt_idx[v]+1:2}")
+            print(f"   {v+1:2}   |     v{self.gpt_idx[v]+1:2}     |     v{self.lowpt_idx[v]+1:2}")
 
     def mostrar_articulacoes_e_demarcadores(self):
         print("\nArticulações e demarcadores (definição da foto):")
