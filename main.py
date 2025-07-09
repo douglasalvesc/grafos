@@ -26,7 +26,7 @@ class Grafo:
         self.lowpt_idx[v] = v
         self.pilha.append(v)
 
-        filhos = 0  # Conta filhos diretos na DFS (importante para raiz)
+        filhos = 0  # Conta filhos diretos na DFS (importante pra raiz)
         for w in range(self.n):
             if self.matriz[v][w]:
                 if not self.visitado[w]:
@@ -64,7 +64,7 @@ class Grafo:
             demarcadores = []
             for w in range(self.n):
                 if self.pai[w] == v and (self.lowpt_idx[w] == v or self.lowpt_idx[w] == w):
-                    demarcadores.append(w+1)  # +1 para exibir humano
+                    demarcadores.append(w+1)
             if demarcadores:
                 novas_articulacoes.add(v)
                 demarcadores_dict[v] = demarcadores
@@ -92,7 +92,7 @@ class Grafo:
             for w in range(self.n):
                 # v é pai de w na árvore DFS e lowpt(w) = v ou w
                 if self.pai[w] == v and (self.lowpt_idx[w] == v or self.lowpt_idx[w] == w):
-                    demarcadores.append(w+1)  # +1 para exibir humano
+                    demarcadores.append(w+1)
             if demarcadores:
                 articulacoes.add(v)
                 demarcadores_dict[v] = demarcadores
@@ -103,7 +103,7 @@ class Grafo:
                 print(f"Vértice {art+1}: demarcadores -> {', '.join(map(str, demarcadores_dict[art]))}")
 
     def mostrar_biconexas(self):
-        print("\nComponentes Biconexas (definição da foto):")
+        print("\nComponentes Biconexas:")
         biconexas = []
         # Para cada articulação e seus demarcadores, verifica a subárvore de cada demarcador
         for v in range(self.n):
@@ -125,7 +125,7 @@ class Grafo:
                 print(f"Componente biconexa induzida por v{v+1}: {comp_humano}")
 
     def _subarvore(self, raiz):
-        # Retorna o conjunto de vértices da subárvore de DFS enraizada em raiz
+        # retorna o conjunto de vértices da subárvore de DFS enraizada em raiz
         visitados = set()
         def dfs_sub(u):
             visitados.add(u)
